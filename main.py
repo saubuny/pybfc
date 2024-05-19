@@ -1,7 +1,13 @@
 import subprocess
 from collections import defaultdict
+import argparse
 
-source = open("examples/hello.bf")
+parser = argparse.ArgumentParser(prog="pybfc", description="A brainfuck compiler")
+parser.add_argument("filename")
+parser.add_argument("-r", "--run", action="store_true")
+args = parser.parse_args()
+
+source = open(args.filename)
 result = open("out.asm", "w")
 
 result.write("format ELF64 executable 3\n")
@@ -18,10 +24,9 @@ stack: list[int] = []
 
 for i in range(len(src)):
     if src[i] == "[":
-            stack.append(i)
+        stack.append(i)
     elif src[i] == "]":
-            matches[stack.pop()] = i
-print(matches)
+        matches[stack.pop()] = i
 
 for i in range(len(src)):
     match src[i]:
@@ -39,22 +44,22 @@ for i in range(len(src)):
             result.write("\tcall input\n")
         # The jumping instructions need data to be passed
         case "[":
-            result.write("\tlea r9, [arr + r8]\n") 
+            result.write("\tlea r9, [arr + r8]\n")
             result.write("\tmovzx r10, byte [r9]\n")
             result.write("\ttest r10, r10\n")
             result.write(f"\tjz cl_br{matches[i]}\n")
-            result.write(f"op_br{i}:\n") 
+            result.write(f"op_br{i}:\n")
         case "]":
             j = None
             for key, value in matches.items():
                 if value == i:
                     j = key
             assert j is not None
-            result.write("\tlea r9, [arr + r8]\n") 
+            result.write("\tlea r9, [arr + r8]\n")
             result.write("\tmovzx r10, byte [r9]\n")
             result.write("\ttest r10, r10\n")
             result.write(f"\tjnz op_br{j}\n")
-            result.write(f"cl_br{matches[j]}:\n") 
+            result.write(f"cl_br{matches[j]}:\n")
 
 
 # Sys exit
@@ -108,7 +113,15 @@ result.write("arr db arr_size dup (0)")
 source.close()
 result.close()
 
-# subprocess.run(["fasm", "out.asm"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-subprocess.run(["fasm", "out.asm"])
+print("[INFO] Compiling")
+res = subprocess.run(
+    ["fasm", "out.asm"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+)
+if res.returncode != 0:
+    print(f"[ERROR] Error {res.returncode} from fasm")
+else:
+    subprocess.run(["rm", "out.asm"])
 
-subprocess.run("./out")
+if args.run:
+    print("[INFO] Running")
+    subprocess.run("./out")
