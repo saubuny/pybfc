@@ -6,7 +6,6 @@ Run your esoteric programming language with an esoteric compiler! (Why would you
 
 - Compiling Brainfuck to x86 fasm assembly (this means fasm is a dependency)
 - 1 byte cells (0-255) values
-- Decent error messages
 - Basic optimizations
 - Linux x86 only (sowwy, i'm writing assembly by hand)
 - Yeah that's pretty much it

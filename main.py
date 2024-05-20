@@ -1,6 +1,7 @@
 import subprocess
 from collections import defaultdict
 import argparse
+from sys import exit
 
 parser = argparse.ArgumentParser(prog="pybfc", description="A brainfuck compiler")
 parser.add_argument("filename")
@@ -27,7 +28,15 @@ for i in range(len(src)):
     if src[i] == "[":
         stack.append(i)
     elif src[i] == "]":
-        matches[stack.pop()] = i
+        try:
+            matches[stack.pop()] = i
+        except IndexError:
+            print("[ERROR] Unmatched closing bracket, exiting")
+            exit(1)
+if len(stack) > 0:
+    print("[ERROR] Unmatched opening bracket, exiting")
+    exit(1)
+
 
 for i in range(len(src)):
     match src[i]:
@@ -68,8 +77,7 @@ for i in range(len(src)):
             for key, value in matches.items():
                 if value == i:
                     j = key
-            # TODO: Implement proper compiler errors
-            assert j is not None, "unmatched parenthesis"
+            assert j is not None  # Should not be possible
             result.write("\tlea r9, [arr + r8]\n")
             result.write("\tmovzx r10, byte [r9]\n")
             result.write("\ttest r10, r10\n")
