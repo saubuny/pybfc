@@ -41,7 +41,6 @@ for i in range(len(src)):
             result.write("\tcall output\n")
         case ",":
             result.write("\tcall input\n")
-            assert False, "Input not yet implemented"
         # The jumping instructions need data to be passed
         case "[":
             result.write("\tlea r9, [arr + r8]\n")
@@ -102,7 +101,13 @@ result.write("\tret\n\n")
 
 # , instruction
 result.write("input:\n")
-result.write("\t; TODO\n")
+result.write("\tlea rdi, [arr + r8]\n")
+result.write("\tmov rax, 1\n")
+result.write("\tmov rdx, rax\n")
+result.write("\tmov rsi, rdi\n")
+result.write("\tmov rdi, 1\n")
+result.write("\tmov rax, 0\n")
+result.write("\tsyscall\n")
 result.write("\tret\n\n")
 
 # Create cells
@@ -120,7 +125,6 @@ res = subprocess.run(
 if res.returncode != 0:
     print(f"[ERROR] Error {res.returncode} from fasm")
 else:
-    print("[INFO] Compiled Successfully")
     if not args.asm:
         subprocess.run(["rm", "out.asm"])
     if args.run:
