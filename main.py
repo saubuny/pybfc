@@ -5,6 +5,7 @@ import argparse
 parser = argparse.ArgumentParser(prog="pybfc", description="A brainfuck compiler")
 parser.add_argument("filename")
 parser.add_argument("-r", "--run", action="store_true")
+parser.add_argument("-a", "--asm", action="store_true")
 args = parser.parse_args()
 
 source = open(args.filename)
@@ -18,10 +19,8 @@ result.write("\txor r8, r8\n")
 
 src = source.read()
 
-# first pass
 matches: dict[int, int] = defaultdict(int)
 stack: list[int] = []
-
 for i in range(len(src)):
     if src[i] == "[":
         stack.append(i)
@@ -42,6 +41,7 @@ for i in range(len(src)):
             result.write("\tcall output\n")
         case ",":
             result.write("\tcall input\n")
+            assert False, "Input not yet implemented"
         # The jumping instructions need data to be passed
         case "[":
             result.write("\tlea r9, [arr + r8]\n")
@@ -54,7 +54,7 @@ for i in range(len(src)):
             for key, value in matches.items():
                 if value == i:
                     j = key
-            assert j is not None
+            assert j is not None  # should not be possible
             result.write("\tlea r9, [arr + r8]\n")
             result.write("\tmovzx r10, byte [r9]\n")
             result.write("\ttest r10, r10\n")
@@ -120,8 +120,9 @@ res = subprocess.run(
 if res.returncode != 0:
     print(f"[ERROR] Error {res.returncode} from fasm")
 else:
-    subprocess.run(["rm", "out.asm"])
-
-if args.run:
-    print("[INFO] Running")
-    subprocess.run("./out")
+    print("[INFO] Compiled Successfully")
+    if not args.asm:
+        subprocess.run(["rm", "out.asm"])
+    if args.run:
+        print("[INFO] Running")
+        subprocess.run("./out")
